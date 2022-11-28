@@ -1,6 +1,6 @@
 package messages
 
-type RequestMessage struct {
-	startdate string `json:"startdate"`
-	enddate   string `json:"enddate"`
+type ArticleDayCount struct {
+	Name  string
+	Views int64
 }
