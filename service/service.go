@@ -59,6 +59,7 @@ func (s Service) DoCalcMostViewedArticles(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	//TODO: set maximum days spread
 	//DayCounts[], err = repo.GetDayCountsForDateRange(start, end)
 
 }

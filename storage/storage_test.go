@@ -15,11 +15,11 @@ func Test_LocalMapStorage(t *testing.T) {
 	wg := sync.WaitGroup{}
 	now := time.Now()
 	future := now.AddDate(00, 0, 10000)
-	var dateMap = map[time.Time][]messages.ArticleDayCount{}
+	var dateMap = map[time.Time][]messages.ArticleCount{}
 	for d := now; d.Before(future) == true; d = d.AddDate(0, 0, 1) {
 		wg.Add(1)
 
-		payload := make([]messages.ArticleDayCount, 1000)
+		payload := make([]messages.ArticleCount, 1000)
 		for index, countobj := range payload {
 			countobj.Name = d.String() + strconv.Itoa(index)
 			countobj.Views = int64(rand.Intn(100))
