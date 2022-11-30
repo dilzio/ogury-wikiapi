@@ -20,7 +20,7 @@ func wikipediafetcher(date time.Time) ([]messages.ArticleDayCount, error) {
 
 func GetArticleCountsForDateRange(startdate time.Time, enddate time.Time) (map[time.Time]*[]messages.ArticleDayCount, error) {
 
-	for d := startdate; d.After(enddate) == false; d = d.AddDate(0, 0, 1) {
+	for d := startdate; d.Before(enddate) == true; d = d.AddDate(0, 0, 1) {
 		go func(dd time.Time) { fmt.Println(dd.Format("2006-01-02")) }(d)
 	}
 

@@ -11,7 +11,7 @@ import (
 var (
 	// Hook for external builders to set storage implementation
 	StorageImpl = LocalMapStorage{
-		make(map[time.Time]messages.ArticleDayCount),
+		make(map[time.Time][]messages.ArticleDayCount),
 		sync.RWMutex{},
 	}
 	// Truncate all keys to midnight
@@ -20,18 +20,18 @@ var (
 
 // Wrapper interface for a key-value store to allow for different backends (e.g. distributed cache, db, etc...)
 type Storage interface {
-	Put(key string, value messages.ArticleDayCount)
-	Get(key time.Time) (*messages.ArticleDayCount, bool)
+	Put(key string, value []messages.ArticleDayCount)
+	Get(key time.Time) ([]messages.ArticleDayCount, bool)
 }
 
 // A very naive (but threadsafe!) ever growing in-memory local cache for non-prod usage.  Implements Storage interface
 type LocalMapStorage struct {
-	internal map[time.Time]messages.ArticleDayCount
+	internal map[time.Time][]messages.ArticleDayCount
 	rwMutex  sync.RWMutex
 }
 
 // Add an article day count
-func (t *LocalMapStorage) Put(key time.Time, value messages.ArticleDayCount) {
+func (t *LocalMapStorage) Put(key time.Time, value []messages.ArticleDayCount) {
 	key = key.Truncate(TRUNCATE_TO_DAY)
 	t.rwMutex.Lock()
 	defer t.rwMutex.Unlock()
@@ -39,12 +39,12 @@ func (t *LocalMapStorage) Put(key time.Time, value messages.ArticleDayCount) {
 }
 
 // Retrieve a pointer to an article day count. Second return value will be true if the key is present
-func (t *LocalMapStorage) Get(key time.Time) (*messages.ArticleDayCount, bool) {
+func (t *LocalMapStorage) Get(key time.Time) ([]messages.ArticleDayCount, bool) {
 	key = key.Truncate(TRUNCATE_TO_DAY)
 	t.rwMutex.RLock()
 	defer t.rwMutex.RUnlock()
 	obj, ok := t.internal[key]
-	return &obj, ok
+	return obj, ok
 }
 
 // non-exported helper function for testing
