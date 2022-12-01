@@ -61,17 +61,8 @@ func wikipediafetcher(date time.Time) ([]messages.ArticleCount, error) {
 	return counts, nil
 }
 
-// Function GetArticleCountsForDateRange concurrently fetches and assembles article counts for a date range
+// Function GetArticleCountsForDateRange concurrently fetches and assembles a view ranking of all articles in a date range
 func GetArticleCountsForDateRange(startdate time.Time, enddate time.Time) (messages.ArticleCountsForDateRange, error) {
-
-	//declare a threadsafe sorted set
-	//spawn a go function for each day
-	//retrieve the slice of objects for the date first from storage then from wikipedia if necessesary
-	//cache in storage if necessary
-	//update itmes in sorted set from cached itmes
-	//end goroutines
-	//construct the return struct
-
 	wg := sync.WaitGroup{}
 	index := sortedset.New[string, int, messages.ArticleCount]()
 	ssUpdateMutex := sync.Mutex{}
@@ -79,7 +70,6 @@ func GetArticleCountsForDateRange(startdate time.Time, enddate time.Time) (messa
 		wg.Add(1)
 		go func(date time.Time) {
 			defer wg.Done()
-			//defer ssUpdateMutex.Unlock()
 			countsForDay := getArticleCountsForDay(date)
 			for _, countobject := range countsForDay {
 				ssUpdateMutex.Lock()
@@ -89,10 +79,49 @@ func GetArticleCountsForDateRange(startdate time.Time, enddate time.Time) (messa
 				} else {
 					aggregateCountObj := node.Value
 					aggregateCountObj.Views = aggregateCountObj.Views + countobject.Views
-					//ssUpdateMutex.Lock()
 					index.AddOrUpdate(countobject.Name, aggregateCountObj.Views, aggregateCountObj)
 				}
 				ssUpdateMutex.Unlock()
+			}
+		}(d)
+	}
+
+	wg.Wait()
+	allTheRankedNodes := index.GetRangeByRank(-1, 1, false)
+	payload := messages.ArticleCountsForDateRange{}
+	payload.StartDate = startdate
+	payload.EndDate = enddate
+	for _, node := range allTheRankedNodes {
+		payload.ArticleCounts = append(payload.ArticleCounts, node.Value)
+	}
+
+	return payload, nil
+}
+
+// Function GetCountsForArticleInRange assembles a total view count for q specific article in a date range
+func GetCountsForArticleInRange(article string, startdate time.Time, enddate time.Time) (messages.ArticleCountsForDateRange, error) {
+	wg := sync.WaitGroup{}
+	index := sortedset.New[string, int, messages.ArticleCount]()
+	ssUpdateMutex := sync.Mutex{}
+	for d := startdate; !d.After(enddate) == true; d = d.AddDate(0, 0, 1) {
+		wg.Add(1)
+		go func(date time.Time) {
+			defer wg.Done()
+			countsForDay := getArticleCountsForDay(date)
+			for _, countobject := range countsForDay {
+				if countobject.Name == article {
+					ssUpdateMutex.Lock()
+					node := index.GetByKey(countobject.Name)
+					if node == nil {
+						index.AddOrUpdate(countobject.Name, countobject.Views, countobject)
+					} else {
+						aggregateCountObj := node.Value
+						aggregateCountObj.Views = aggregateCountObj.Views + countobject.Views
+						index.AddOrUpdate(countobject.Name, aggregateCountObj.Views, aggregateCountObj)
+					}
+					ssUpdateMutex.Unlock()
+				}
+
 			}
 		}(d)
 	}

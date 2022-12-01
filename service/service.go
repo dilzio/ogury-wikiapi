@@ -16,8 +16,27 @@ func DoCalcMostViewedDayInRange(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func DoCalcViewCountForArticle(writer http.ResponseWriter, request *http.Request) {
-
+func DoCalcViewCountForArticle(w http.ResponseWriter, r *http.Request) {
+	start, end, ok := validateDates(w, r)
+	if !ok {
+		return
+	}
+	articleName := chi.URLParam(r, "article")
+	if len(articleName) == 0 {
+		message := "Article name param not found: "
+		log.Error(message)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(message))
+		return
+	}
+	result, err := indexer.GetCountsForArticleInRange(articleName, start, end)
+	var bytes []byte
+	if bytes, err = json.Marshal(&result); err != nil {
+		log.Println("Failed to marshal reply:", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.Write(bytes)
 }
 
 // Function validateDates does basic date parsing and validation. Will return parsed start
@@ -59,14 +78,11 @@ func validateDates(w http.ResponseWriter, r *http.Request) (time.Time, time.Time
 	return start, end, true
 }
 func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
-
 	start, end, ok := validateDates(w, r)
-
 	if !ok {
 		return
 	}
 	result, err := indexer.GetArticleCountsForDateRange(start, end)
-
 	var bytes []byte
 	if bytes, err = json.Marshal(&result); err != nil {
 		log.Println("Failed to marshal reply:", err)
