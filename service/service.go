@@ -1,8 +1,11 @@
 package service
 
 import (
+	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
+	"gt_mtc_takehome/constants"
+	"gt_mtc_takehome/indexer"
 	"net/http"
 	"time"
 )
@@ -14,8 +17,6 @@ Hook to monkey patch the chi library in tests
 var (
 	ChiUrlParam = chi.URLParam
 )
-
-const date_layout = "20060102"
 
 /*
 Service encapsulates all the API business logic
@@ -35,22 +36,26 @@ func (s Service) DoCalcViewCountForArticle(writer http.ResponseWriter, request *
 
 }
 
-func (s Service) DoCalcMostViewedArticles(w http.ResponseWriter, r *http.Request) {
+func (s Service) DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
 
 	startdate := ChiUrlParam(r, "startdate")
 	enddate := ChiUrlParam(r, "enddate")
 
-	start, err := time.Parse(date_layout, startdate)
+	start, err := time.Parse(constants.DATELAYOUT, startdate)
 	if err != nil {
-		log.Error("Bad startdate value; ", err)
+		message := "Bad startdate value: " + err.Error()
+		log.Error(message)
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(message))
 		return
 	}
 
-	end, err := time.Parse(date_layout, enddate)
+	end, err := time.Parse(constants.DATELAYOUT, enddate)
 	if err != nil {
-		log.Error("Bad enddate value: ", err)
+		message := "Bad enddate value: " + err.Error()
+		log.Error(message)
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(message))
 		return
 	}
 
@@ -59,6 +64,17 @@ func (s Service) DoCalcMostViewedArticles(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	result, err := indexer.GetArticleCountsForDateRange(start, end)
+
+	var bytes []byte
+	if bytes, err = json.Marshal(&result); err != nil {
+		log.Println("Failed to marshal reply:", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.Write(bytes)
+
 	//TODO: set maximum days spread
 	//DayCounts[], err = repo.GetDayCountsForDateRange(start, end)
 

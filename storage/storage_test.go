@@ -22,7 +22,7 @@ func Test_LocalMapStorage(t *testing.T) {
 		payload := make([]messages.ArticleCount, 1000)
 		for index, countobj := range payload {
 			countobj.Name = d.String() + strconv.Itoa(index)
-			countobj.Views = int64(rand.Intn(100))
+			countobj.Views = rand.Intn(100)
 		}
 		dateMap[d] = payload
 		go func(key time.Time) {
