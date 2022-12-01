@@ -1,3 +1,4 @@
+// Package service is the top-level API container and handles inbound and outbound param validation and (un)marshalling
 package service
 
 import (
@@ -10,17 +11,6 @@ import (
 	"time"
 )
 
-/*
-*
-Hook to monkey patch the chi library in tests
-*/
-var (
-	ChiUrlParam = chi.URLParam
-)
-
-/*
-Service encapsulates all the API business logic
-*/
 type Service struct {
 }
 
@@ -38,8 +28,8 @@ func (s Service) DoCalcViewCountForArticle(writer http.ResponseWriter, request *
 
 func (s Service) DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
 
-	startdate := ChiUrlParam(r, "startdate")
-	enddate := ChiUrlParam(r, "enddate")
+	startdate := chi.URLParam(r, "startdate")
+	enddate := chi.URLParam(r, "enddate")
 
 	start, err := time.Parse(constants.DATELAYOUT, startdate)
 	if err != nil {
