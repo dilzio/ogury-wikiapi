@@ -3,6 +3,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
 	"gt_mtc_takehome/constants"
@@ -19,35 +20,51 @@ func DoCalcViewCountForArticle(writer http.ResponseWriter, request *http.Request
 
 }
 
-func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
-
-	startdate := chi.URLParam(r, "startdate")
-	enddate := chi.URLParam(r, "enddate")
-
-	start, err := time.Parse(constants.DATELAYOUT, startdate)
+// Function validateDates does basic date parsing and validation. Will return parsed start
+// and end dates if successful with a true boolean or placeholders with a false boolean value if unsuccessfulX
+func validateDates(w http.ResponseWriter, r *http.Request) (time.Time, time.Time, bool) {
+	start, err := time.Parse(constants.DATELAYOUT, chi.URLParam(r, "startdate"))
 	if err != nil {
 		message := "Bad startdate value: " + err.Error()
 		log.Error(message)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(message))
-		return
+		return time.Now(), time.Now(), false
 	}
 
-	end, err := time.Parse(constants.DATELAYOUT, enddate)
+	end, err := time.Parse(constants.DATELAYOUT, chi.URLParam(r, "enddate"))
 	if err != nil {
 		message := "Bad enddate value: " + err.Error()
 		log.Error(message)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(message))
-		return
+		return time.Now(), time.Now(), false
 	}
 
-	if !end.After(start) {
-		log.Error("End date not after start date")
+	if end.Before(start) {
+		message := "End date cannot be before start date"
+		log.Error(message)
 		w.WriteHeader(http.StatusBadRequest)
-		return
+		w.Write([]byte(message))
+		return time.Now(), time.Now(), false
 	}
 
+	if end.Sub(start).Hours()/24 >= constants.MAXDAYINTERVAL {
+		message := fmt.Sprintf("Maximum interval between dates is: %d days ", constants.MAXDAYINTERVAL)
+		log.Error(message)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(message))
+		return time.Now(), time.Now(), false
+	}
+	return start, end, true
+}
+func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
+
+	start, end, ok := validateDates(w, r)
+
+	if !ok {
+		return
+	}
 	result, err := indexer.GetArticleCountsForDateRange(start, end)
 
 	var bytes []byte
@@ -57,8 +74,4 @@ func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(bytes)
-
-	//TODO: set maximum days spread
-	//DayCounts[], err = repo.GetDayCountsForDateRange(start, end)
-
 }
