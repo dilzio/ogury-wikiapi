@@ -37,7 +37,8 @@ func wikipediafetcher(date time.Time) ([]messages.ArticleCount, error) {
 
 	//Call the API and return an error if any
 	resp, err := http.Get(url)
-	if err != nil {
+	if err != nil || resp.StatusCode != http.StatusOK {
+		log.Error("Error Calling Wikipedia API. Status: ", resp.StatusCode, err)
 		return counts, err
 	}
 	//Map body into struct representation, return an error if it fails

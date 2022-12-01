@@ -9,11 +9,10 @@ import (
 )
 
 func main() {
-	s := service.NewInstance()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Get("/mostviewed/{startdate}/{enddate}", s.DoGetArticleCountsForDateRange)
-	r.Get("/viewcount/{article}/{startdate}/{enddate}", s.DoCalcViewCountForArticle)
-	r.Get("/mostviewedday/{article}/{year}/{month}", s.DoCalcMostViewedDayInRange)
+	r.Get("/mostviewed/{startdate}/{enddate}", service.DoGetArticleCountsForDateRange)
+	r.Get("/viewcount/{article}/{startdate}/{enddate}", service.DoCalcViewCountForArticle)
+	r.Get("/mostviewedday/{article}/{year}/{month}", service.DoCalcMostViewedDayInRange)
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

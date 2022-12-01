@@ -11,22 +11,15 @@ import (
 	"time"
 )
 
-type Service struct {
-}
-
-func NewInstance() Service {
-	return Service{}
-}
-
-func (s Service) DoCalcMostViewedDayInRange(w http.ResponseWriter, r *http.Request) {
+func DoCalcMostViewedDayInRange(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s Service) DoCalcViewCountForArticle(writer http.ResponseWriter, request *http.Request) {
+func DoCalcViewCountForArticle(writer http.ResponseWriter, request *http.Request) {
 
 }
 
-func (s Service) DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
+func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
 
 	startdate := chi.URLParam(r, "startdate")
 	enddate := chi.URLParam(r, "enddate")
