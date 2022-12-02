@@ -36,6 +36,7 @@ func DoCalcViewCountForArticle(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(bytes)
 }
 
@@ -89,5 +90,6 @@ func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(bytes)
 }
