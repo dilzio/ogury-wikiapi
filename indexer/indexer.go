@@ -138,6 +138,52 @@ func GetCountsForArticleInRange(article string, startdate time.Time, enddate tim
 	return payload, nil
 }
 
+// Function GetTopDayForArticle returns the most viewed day for an article in the time range
+func GetTopDayForArticle(article string, startdate time.Time, enddate time.Time) (messages.ArticleCountsForDateRange, error) {
+	wg := sync.WaitGroup{}
+	index := sortedset.New[string, int, messages.ArticleCount]()
+	ssUpdateMutex := sync.Mutex{}
+	for d := startdate; d.Before(enddate) == true; d = d.AddDate(0, 0, 1) {
+
+		wg.Add(1)
+		go func(date time.Time) {
+			defer wg.Done()
+			countsForDay := getArticleCountsForDay(date)
+			for _, countobject := range countsForDay {
+				if countobject.Name == article {
+					log.Debugf("count object date: %s  views: %d", date.String(), countobject.Views)
+					ssUpdateMutex.Lock()
+					node := index.GetByKey(countobject.Name)
+					if node == nil {
+						countobject.Date = date
+						index.AddOrUpdate(countobject.Name, countobject.Views, countobject)
+					} else {
+						aggregateCountObj := node.Value
+						if countobject.Views > aggregateCountObj.Views {
+							countobject.Date = date
+							//println("count object d is:", date.String())
+							index.AddOrUpdate(countobject.Name, countobject.Views, countobject)
+						}
+					}
+					ssUpdateMutex.Unlock()
+				}
+
+			}
+		}(d)
+	}
+
+	wg.Wait()
+	allTheRankedNodes := index.GetRangeByRank(-1, 1, false)
+	payload := messages.ArticleCountsForDateRange{}
+	payload.StartDate = startdate
+	payload.EndDate = enddate
+	for _, node := range allTheRankedNodes {
+		payload.ArticleCounts = append(payload.ArticleCounts, node.Value)
+	}
+
+	return payload, nil
+}
+
 // Function getArticleCountsForDay will check the db cache for the slice of article counts and if not found will
 // pull from the Wikipedia api
 func getArticleCountsForDay(day time.Time) []messages.ArticleCount {

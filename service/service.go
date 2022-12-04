@@ -12,32 +12,71 @@ import (
 	"time"
 )
 
-func DoCalcMostViewedDayInRange(w http.ResponseWriter, r *http.Request) {
+//Function DoCalcMostViewedDayInMonthForArticle returns the day in a specified month
+//when the article had the most views
 
+func DoCalcMostViewedDayInMonthForArticle(w http.ResponseWriter, r *http.Request) {
+	articleName, articleok := validateArticleParam(w, r)
+	if !articleok {
+		return
+	}
+	yearstr := chi.URLParam(r, "year")
+	monthstr := chi.URLParam(r, "month")
+	firstOfTheMonth, err := time.Parse("20060102", yearstr+monthstr+"01")
+	if err != nil {
+		message := "Bad date params.  Format should be 4-digit year and 2 digit month eg: /mostviewedday/myarticle/2022/01"
+		log.Error(message)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(message))
+		return
+	}
+
+	onemonthlater := firstOfTheMonth.AddDate(0, 1, 0)
+	firstOfNextMonth := time.Date(onemonthlater.Year(), onemonthlater.Month(), 1, 0, 0, 0, 0, onemonthlater.Location())
+	result, err := indexer.GetTopDayForArticle(articleName, firstOfTheMonth, firstOfNextMonth)
+	var bytes []byte
+	if bytes, err = json.Marshal(&result); err != nil {
+		log.Error("Failed to marshal reply:", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bytes)
 }
 
+// Function DoCalcViewCountForArticle will return the view count for an article in a date range
 func DoCalcViewCountForArticle(w http.ResponseWriter, r *http.Request) {
 	start, end, ok := validateDates(w, r)
 	if !ok {
 		return
 	}
+	articleName, articleok := validateArticleParam(w, r)
+	if !articleok {
+		return
+	}
+	result, err := indexer.GetCountsForArticleInRange(articleName, start, end)
+	var bytes []byte
+	if bytes, err = json.Marshal(&result); err != nil {
+		log.Error("Failed to marshal reply:", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bytes)
+}
+
+// Function validateArticleParam checks for the presence of an article.  Strictly speaking it isn't needed with the current
+// rounting setup as if the argument is missing the middleware will catch it, but it's here for completeness if routing were to change.
+func validateArticleParam(w http.ResponseWriter, r *http.Request) (string, bool) {
 	articleName := chi.URLParam(r, "article")
 	if len(articleName) == 0 {
 		message := "Article name param not found: "
 		log.Error(message)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(message))
-		return
+		return "", false
 	}
-	result, err := indexer.GetCountsForArticleInRange(articleName, start, end)
-	var bytes []byte
-	if bytes, err = json.Marshal(&result); err != nil {
-		log.Println("Failed to marshal reply:", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(bytes)
+	return articleName, true
 }
 
 // Function validateDates does basic date parsing and validation. Will return parsed start
@@ -86,7 +125,7 @@ func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
 	result, err := indexer.GetArticleCountsForDateRange(start, end)
 	var bytes []byte
 	if bytes, err = json.Marshal(&result); err != nil {
-		log.Println("Failed to marshal reply:", err)
+		log.Error("Failed to marshal reply:", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

@@ -4,8 +4,9 @@ import "time"
 
 // Type ArticleCount captures the counts for an article
 type ArticleCount struct {
-	Name  string `json:"name"`
-	Views int    `json:"views"`
+	Name  string    `json:"name"`
+	Views int       `json:"views"`
+	Date  time.Time `json:"time"`
 }
 
 // Type ArticleCountsForDateRange wrappers a set of article counts aggregated for the days between StartDate and EndDate (inclusive of both)
