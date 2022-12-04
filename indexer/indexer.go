@@ -1,5 +1,6 @@
 // Package indexer contains functions for sourcing and aggregating article counts. It makes heavy use of the
-// github.com/zavitax/sortedset-go implementation for ranking
+// github.com/zavitax/sortedset-go implementation for ranking.  It depends on a Storage implementation for caching
+// and a fetcher function for retrieving the articles from the original source
 package indexer
 
 import (
@@ -24,7 +25,7 @@ var (
 	//Var Fetcher holds an instance of a fetcher function. It is exported to enable  stubbing for tests
 	Fetcher fetcher = wikipediafetcher
 	//Var DB is a cache for article day counts.  It is exported to enable stubbing for tests
-	DB = &storage.StorageImpl
+	DB storage.Storage = storage.StorageImpl
 )
 
 // wikipediafetcher is a wrapper fetcher function for the Wikipedia Pageviews API.
