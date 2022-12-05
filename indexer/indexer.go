@@ -5,6 +5,7 @@ package indexer
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zavitax/sortedset-go"
@@ -23,9 +24,9 @@ type fetcher = func(date time.Time) ([]messages.ArticleCount, error)
 
 var (
 	//Var Fetcher holds an instance of a fetcher function. It is exported to enable  stubbing for tests
-	Fetcher fetcher = wikipediafetcher
+	Fetcher = wikipediafetcher
 	//Var DB is a cache for article day counts.  It is exported to enable stubbing for tests
-	DB storage.Storage = storage.StorageImpl
+	DB = storage.StorageImpl
 )
 
 // wikipediafetcher is a wrapper fetcher function for the Wikipedia Pageviews API.
@@ -39,8 +40,9 @@ func wikipediafetcher(date time.Time) ([]messages.ArticleCount, error) {
 	//Call the API and return an error if any
 	resp, err := http.Get(url)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		log.Error("Error Calling Wikipedia API. Status: ", resp.StatusCode, err)
-		return counts, err
+		message := "Unable to retrieve page count data from Wikipedia: " + date.Format(constants.DATELAYOUT)
+		log.Error(message)
+		return counts, errors.New(message)
 	}
 	//Map body into struct representation, return an error if it fails
 	defer resp.Body.Close()
@@ -67,11 +69,16 @@ func GetArticleCountsForDateRange(startdate time.Time, enddate time.Time) (messa
 	wg := sync.WaitGroup{}
 	index := sortedset.New[string, int, messages.ArticleCount]()
 	ssUpdateMutex := sync.Mutex{}
+	errorChannel := make(chan error, constants.MAXDAYINTERVAL)
 	for d := startdate; !d.After(enddate) == true; d = d.AddDate(0, 0, 1) {
 		wg.Add(1)
 		go func(date time.Time) {
 			defer wg.Done()
-			countsForDay := getArticleCountsForDay(date)
+			countsForDay, err := getArticleCountsForDay(date)
+			if err != nil {
+				errorChannel <- err
+				return
+			}
 			for _, countobject := range countsForDay {
 				ssUpdateMutex.Lock()
 				node := index.GetByKey(countobject.Name)
@@ -88,6 +95,15 @@ func GetArticleCountsForDateRange(startdate time.Time, enddate time.Time) (messa
 	}
 
 	wg.Wait()
+	//Errors in any of the child calls will abort the overall call since we won't have correct counts.  Assemble the message and pass up the error
+	message := ""
+	close(errorChannel)
+	for err := range errorChannel {
+		message = message + err.Error() + "\n"
+	}
+	if len(message) > 0 {
+		return messages.ArticleCountsForDateRange{}, errors.New(message)
+	}
 	allTheRankedNodes := index.GetRangeByRank(-1, 1, false)
 	payload := messages.ArticleCountsForDateRange{}
 	payload.StartDate = startdate
@@ -104,11 +120,17 @@ func GetCountsForArticleInRange(article string, startdate time.Time, enddate tim
 	wg := sync.WaitGroup{}
 	index := sortedset.New[string, int, messages.ArticleCount]()
 	ssUpdateMutex := sync.Mutex{}
+	errorChannel := make(chan error, constants.MAXDAYINTERVAL)
 	for d := startdate; !d.After(enddate) == true; d = d.AddDate(0, 0, 1) {
 		wg.Add(1)
 		go func(date time.Time) {
 			defer wg.Done()
-			countsForDay := getArticleCountsForDay(date)
+			countsForDay, err := getArticleCountsForDay(date)
+			if err != nil {
+				log.Debugf("Unable to retrieve data for date: %d", date)
+				errorChannel <- err
+				return
+			}
 			for _, countobject := range countsForDay {
 				if countobject.Name == article {
 					ssUpdateMutex.Lock()
@@ -128,6 +150,15 @@ func GetCountsForArticleInRange(article string, startdate time.Time, enddate tim
 	}
 
 	wg.Wait()
+	//Errors in any of the child calls will abort the overall call since we won't have correct counts.  Assemble the message and pass up the error
+	message := ""
+	close(errorChannel)
+	for err := range errorChannel {
+		message = message + err.Error() + "\n"
+	}
+	if len(message) > 0 {
+		return messages.ArticleCountsForDateRange{}, errors.New(message)
+	}
 	allTheRankedNodes := index.GetRangeByRank(-1, 1, false)
 	payload := messages.ArticleCountsForDateRange{}
 	payload.StartDate = startdate
@@ -144,12 +175,17 @@ func GetTopDayForArticle(article string, startdate time.Time, enddate time.Time)
 	wg := sync.WaitGroup{}
 	index := sortedset.New[string, int, messages.ArticleCount]()
 	ssUpdateMutex := sync.Mutex{}
+	errorChannel := make(chan error, constants.MAXDAYINTERVAL)
 	for d := startdate; d.Before(enddate) == true; d = d.AddDate(0, 0, 1) {
-
 		wg.Add(1)
 		go func(date time.Time) {
 			defer wg.Done()
-			countsForDay := getArticleCountsForDay(date)
+			countsForDay, err := getArticleCountsForDay(date)
+			if err != nil {
+				log.Debugf("Unable to retrieve data for date: %d", date)
+				errorChannel <- err
+				return
+			}
 			for _, countobject := range countsForDay {
 				if countobject.Name == article {
 					log.Debugf("count object date: %s  views: %d", date.String(), countobject.Views)
@@ -174,6 +210,16 @@ func GetTopDayForArticle(article string, startdate time.Time, enddate time.Time)
 	}
 
 	wg.Wait()
+
+	//Errors in any of the child calls will abort the overall call since we won't have correct counts.  Assemble the message and pass up the error
+	message := ""
+	close(errorChannel)
+	for err := range errorChannel {
+		message = message + err.Error() + "\n"
+	}
+	if len(message) > 0 {
+		return messages.ArticleCountsForDateRange{}, errors.New(message)
+	}
 	allTheRankedNodes := index.GetRangeByRank(-1, 1, false)
 	payload := messages.ArticleCountsForDateRange{}
 	payload.StartDate = startdate
@@ -187,16 +233,15 @@ func GetTopDayForArticle(article string, startdate time.Time, enddate time.Time)
 
 // Function getArticleCountsForDay will check the db cache for the slice of article counts and if not found will
 // pull from the Wikipedia api
-func getArticleCountsForDay(day time.Time) []messages.ArticleCount {
+func getArticleCountsForDay(day time.Time) ([]messages.ArticleCount, error) {
 	cachedcounts, ok := DB.Get(day)
 	if !ok {
 		fetchedCounts, err := Fetcher(day)
 		if err != nil {
-			log.Errorf("Unable to retrieve counts for date: %s", day.String())
-			return nil
+			return nil, err
 		}
 		DB.Put(day, fetchedCounts)
-		return fetchedCounts
+		return fetchedCounts, nil
 	}
-	return cachedcounts
+	return cachedcounts, nil
 }

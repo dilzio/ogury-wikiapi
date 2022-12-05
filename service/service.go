@@ -12,9 +12,8 @@ import (
 	"time"
 )
 
-//Function DoCalcMostViewedDayInMonthForArticle returns the day in a specified month
-//when the article had the most views
-
+// Function DoCalcMostViewedDayInMonthForArticle returns the day in a specified month
+// when an article had the most views
 func DoCalcMostViewedDayInMonthForArticle(w http.ResponseWriter, r *http.Request) {
 	articleName, articleok := validateArticleParam(w, r)
 	if !articleok {
@@ -34,6 +33,12 @@ func DoCalcMostViewedDayInMonthForArticle(w http.ResponseWriter, r *http.Request
 	onemonthlater := firstOfTheMonth.AddDate(0, 1, 0)
 	firstOfNextMonth := time.Date(onemonthlater.Year(), onemonthlater.Month(), 1, 0, 0, 0, 0, onemonthlater.Location())
 	result, err := indexer.GetTopDayForArticle(articleName, firstOfTheMonth, firstOfNextMonth)
+	if err != nil {
+		log.Error(err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
 	var bytes []byte
 	if bytes, err = json.Marshal(&result); err != nil {
 		log.Error("Failed to marshal reply:", err)
@@ -44,7 +49,30 @@ func DoCalcMostViewedDayInMonthForArticle(w http.ResponseWriter, r *http.Request
 	w.Write(bytes)
 }
 
-// Function DoCalcViewCountForArticle will return the view count for an article in a date range
+// Function DoGetArticleCountsForDateRange will return a list of articles ranked by cumulative views in a date range
+func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
+	start, end, ok := validateDates(w, r)
+	if !ok {
+		return
+	}
+	result, err := indexer.GetArticleCountsForDateRange(start, end)
+	if err != nil {
+		log.Error(err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	var bytes []byte
+	if bytes, err = json.Marshal(&result); err != nil {
+		log.Error("Failed to marshal reply:", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bytes)
+}
+
+// Function DoCalcViewCountForArticle will return the aggregate view count for a specific article in a date range
 func DoCalcViewCountForArticle(w http.ResponseWriter, r *http.Request) {
 	start, end, ok := validateDates(w, r)
 	if !ok {
@@ -55,6 +83,12 @@ func DoCalcViewCountForArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := indexer.GetCountsForArticleInRange(articleName, start, end)
+	if err != nil {
+		log.Error(err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
 	var bytes []byte
 	if bytes, err = json.Marshal(&result); err != nil {
 		log.Error("Failed to marshal reply:", err)
@@ -116,19 +150,4 @@ func validateDates(w http.ResponseWriter, r *http.Request) (time.Time, time.Time
 		return time.Now(), time.Now(), false
 	}
 	return start, end, true
-}
-func DoGetArticleCountsForDateRange(w http.ResponseWriter, r *http.Request) {
-	start, end, ok := validateDates(w, r)
-	if !ok {
-		return
-	}
-	result, err := indexer.GetArticleCountsForDateRange(start, end)
-	var bytes []byte
-	if bytes, err = json.Marshal(&result); err != nil {
-		log.Error("Failed to marshal reply:", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(bytes)
 }
