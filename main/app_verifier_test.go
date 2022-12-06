@@ -90,7 +90,7 @@ func Test_E2E_API(t *testing.T) {
 	//https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/2021/01/01
 	//https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/2021/01/02
 	//https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/2021/01/03
-	//respectively return:34805 + 33637 + 28913 = 96635 for the same peried
+	//respectively return:34805 + 33637 + 28913 = 96635 for the same period for the same article
 	r, _ = http.Get("http://localhost:8080/viewcount/Dua_Lipa/20210101/20210103")
 	defer r.Body.Close()
 	bytes, _ = io.ReadAll(r.Body)
