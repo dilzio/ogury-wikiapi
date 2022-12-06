@@ -8,7 +8,19 @@ import (
 	"testing"
 )
 
+//Test_E2E_API is quick and dirty full E2E blackbox integration test program that can be run against
+//either live or stubbed out dependencies.  It can be used in a few different ways:
+//1. During development by engineers as a smoke test
+//2. As part of a CD/CI pipeline with stubbed data
+//3. As a cronned health check against a live production instance
+
 func Test_E2E_API(t *testing.T) {
+	/*
+		Example code to show how Wikipedia fetcher can be stubbed out
+		indexer.Fetcher = func(date time.Time) ([]messages.ArticleCount, error) {
+			// returns stubbed data
+		}
+	*/
 	go main()
 	//TestDoCalcMostViewedArticles HappyPath
 	r, _ := http.Get("http://localhost:8080/mostviewed/20220101/20220102")
@@ -66,5 +78,12 @@ func Test_E2E_API(t *testing.T) {
 	bytes, _ = io.ReadAll(r.Body)
 	payloadString = string(bytes[:])
 	assert.True(t, strings.Contains(payloadString, "Bad date params.  Format should be 4-digit year and 2 digit month eg: /mostviewedday/myarticle/2022/01"))
+
+	//Test viewcount - happy path
+	r, _ = http.Get("http://localhost:8080/viewcount/Dua_Lipa/20210101/20210103")
+	defer r.Body.Close()
+	bytes, _ = io.ReadAll(r.Body)
+	payloadString = string(bytes[:])
+	assert.True(t, strings.Contains(payloadString, "{\"startdate\":\"2021-01-01T00:00:00Z\",\"enddate\":\"2021-01-03T00:00:00Z\",\"articles\":[{\"name\":\"Dua_Lipa\",\"views\":96635,\"time\":\"0001-01-01T00:00:00Z\"}]}"))
 
 }
