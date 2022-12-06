@@ -3,7 +3,7 @@
 ## Description
 
 This project implements a wrapper API that aggregates data from the
-Wikipedia [Pageviews API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews#Quick_start)
+Wikipedia [Pageviews API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews#Quick_start).
 There are 3 endpoints:
 
 1. **mostviewed**: given start and end dates, will return an aggregate ranking of top viewed articles
