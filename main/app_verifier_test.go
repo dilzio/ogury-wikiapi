@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 //Test_E2E_API is quick and dirty full E2E blackbox integration test program that can be run against
@@ -24,6 +25,7 @@ func Test_E2E_API(t *testing.T) {
 		}
 	*/
 	go main()
+	time.Sleep(4 * time.Second)
 	//mostviewed HappyPath
 	r, _ := http.Get("http://localhost:8080/mostviewed/20220101/20220102")
 	defer r.Body.Close()
