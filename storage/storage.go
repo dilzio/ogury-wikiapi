@@ -10,7 +10,7 @@ import (
 // Hook for external builders to set storage implementation
 var (
 	// Hook for external builders to set storage implementation
-	StorageImpl Storage = LocalMapStorage{
+	StorageImpl Storage = &LocalMapStorage{
 		make(map[time.Time][]messages.ArticleCount),
 		sync.RWMutex{},
 	}
@@ -31,7 +31,7 @@ type LocalMapStorage struct {
 }
 
 // Add an article day count
-func (t LocalMapStorage) Put(key time.Time, value []messages.ArticleCount) {
+func (t *LocalMapStorage) Put(key time.Time, value []messages.ArticleCount) {
 	key = key.Truncate(TRUNCATE_TO_DAY)
 	t.rwMutex.Lock()
 	defer t.rwMutex.Unlock()
@@ -39,7 +39,7 @@ func (t LocalMapStorage) Put(key time.Time, value []messages.ArticleCount) {
 }
 
 // Retrieve a pointer to an article day count. Second return value will be true if the key is present
-func (t LocalMapStorage) Get(key time.Time) ([]messages.ArticleCount, bool) {
+func (t *LocalMapStorage) Get(key time.Time) ([]messages.ArticleCount, bool) {
 	key = key.Truncate(TRUNCATE_TO_DAY)
 	t.rwMutex.RLock()
 	defer t.rwMutex.RUnlock()
