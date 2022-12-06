@@ -22,7 +22,7 @@ can be installed from www.docker.com. To install and build the app:
 2. Cd to the top-level directory (where this README is located)
 3. Build the docker image. This will also build the application: `docker build -t mtc-api .`
 
-To run the API:
+To run the API (not necessary for tests):
 `docker run -p 8080:8080 -it --rm --name mtc-api mtc-api`
 
 To run unit tests:
