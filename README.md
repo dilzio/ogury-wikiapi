@@ -10,7 +10,7 @@ There are 3 endpoints:
 2. **viewcount**: given a start date, end date, and article name, will return the total views for that article in the
    date range
 3. **mostviewedday**: given a 4-digit year, 2-digit month, and article name, will return the day the article had the
-   highest number of views that month
+   highest number of views in that month
 
 ## Install and Run
 
@@ -25,10 +25,13 @@ can be installed from www.docker.com. To install and build the app:
 To run the API:
 `docker run -p 8080:8080 -it --rm --name mtc-api mtc-api`
 
-To run tests:
-`docker run mtc-api go test -p 1 ./...`
+To run unit tests:
+`docker run mtc-api go test ./storage ./indexer`
 
-## Usage
+To run E2E integration test against live Wikipedia API:
+`docker run mtc-api go test ./main`
+
+## API Usage
 
 The API is configured to run on localhost:8080. All calls are GET calls in keeping with REST norms and as such they can
 be

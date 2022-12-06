@@ -15,5 +15,6 @@ func main() {
 	r.Get("/mostviewed/{startdate}/{enddate}", service.DoGetArticleCountsForDateRange)
 	r.Get("/viewcount/{article}/{startdate}/{enddate}", service.DoCalcViewCountForArticle)
 	r.Get("/mostviewedday/{article}/{year}/{month}", service.DoCalcMostViewedDayInMonthForArticle)
+	log.Infof("Hi! listening on localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
