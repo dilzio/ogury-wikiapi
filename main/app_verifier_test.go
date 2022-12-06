@@ -97,4 +97,18 @@ func Test_E2E_API(t *testing.T) {
 	payloadString = string(bytes[:])
 	assert.True(t, strings.Contains(payloadString, "{\"startdate\":\"2021-01-01T00:00:00Z\",\"enddate\":\"2021-01-03T00:00:00Z\",\"articles\":[{\"name\":\"Dua_Lipa\",\"views\":96635,\"time\":\"0001-01-01T00:00:00Z\"}]}"))
 
+	//Test viewcount - 	article not found
+	r, _ = http.Get("http://localhost:8080/viewcount/foo_bar_baz/20210101/20210103")
+	defer r.Body.Close()
+	bytes, _ = io.ReadAll(r.Body)
+	payloadString = string(bytes[:])
+	assert.True(t, strings.Contains(payloadString, "{\"startdate\":\"2021-01-01T00:00:00Z\",\"enddate\":\"2021-01-03T00:00:00Z\",\"articles\":null}"))
+
+	//Test viewcount - missing article param
+	r, _ = http.Get("http://localhost:8080/viewcount/20210101/20210103")
+	defer r.Body.Close()
+	bytes, _ = io.ReadAll(r.Body)
+	payloadString = string(bytes[:])
+	assert.True(t, strings.Contains(payloadString, "404 page not found"))
+
 }

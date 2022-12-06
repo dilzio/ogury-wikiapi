@@ -1,6 +1,7 @@
 // Package indexer contains functions for sourcing and aggregating article counts. It makes heavy use of the
 // github.com/zavitax/sortedset-go implementation for ranking.  It depends on a Storage implementation for caching
 // and a fetcher function for retrieving the articles from the original source
+// TODO: these api calls have a mostly similar algorithm that could be refactored into a higher-order function
 package indexer
 
 import (
@@ -24,7 +25,7 @@ type fetcher = func(date time.Time) ([]messages.ArticleCount, error)
 
 var (
 	//Var Fetcher holds an instance of a fetcher function. It is exported to enable  stubbing for tests
-	Fetcher = wikipediafetcher
+	Fetcher fetcher = wikipediafetcher
 	//Var DB is a cache for article day counts.  It is exported to enable stubbing for tests
 	DB = storage.StorageImpl
 )
