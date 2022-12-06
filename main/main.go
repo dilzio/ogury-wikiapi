@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/mostviewed/{startdate}/{enddate}", service.DoGetArticleCountsForDateRange)

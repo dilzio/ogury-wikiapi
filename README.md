@@ -22,25 +22,23 @@ can be installed from www.docker.com. To install and build the app:
 2. Cd to the top-level directory (where this README is located)
 3. Build the docker image. This will also build the application: `docker build -t mtc-api .`
 
-To run the API (not necessary for tests):
-`docker run -p 8080:8080 -it --rm --name mtc-api mtc-api`
-
 To run unit tests:
 `docker run mtc-api go test ./storage ./indexer`
 
 To run E2E integration test against live Wikipedia API:
 `docker run mtc-api go test ./main`
 
+To run the API (not necessary for tests):
+`docker run -p 8080:8080 -it --rm --name mtc-api mtc-api`
 ## API Usage
-
 The API is configured to run on localhost:8080. All calls are GET calls in keeping with REST norms and as such they can
 be
 called from a browser. Some example calls are below:
 
 Find the day in July 2015 where the article "Albert_Einstein" had the most views:
 `http://localhost:8080/mostviewedday/Albert_Einstein/2015/07`
-reply:
 
+reply:
 ```
 {
  "startdate":"2015-07-01T00:00:00Z",
@@ -54,6 +52,7 @@ reply:
 Find the set of most viewed articles from Jan 1-April 1 2021 (inclusive) in descending order
 `http://localhost:8080/mostviewed/20210101/20210401`
 
+reply:
 ```
 {
  "startdate":"2021-01-01T00:00:00Z",
@@ -72,6 +71,7 @@ Find the set of most viewed articles from Jan 1-April 1 2021 (inclusive) in desc
 Find the total views for the article "Dua_Lipa" from Aug 15-Oct 31 2022 (inclusive)
 `http://localhost:8080/viewcount/Dua_Lipa/20220815/20221031`
 
+reply:
 ```
 {
  "startdate":"2022-08-15T00:00:00Z",
