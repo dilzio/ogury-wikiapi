@@ -12,6 +12,7 @@ import (
 
 // Load many items concurrently then pull them out and check them
 func Test_LocalMapStorage(t *testing.T) {
+	underTest := NewLocalMapStorage()
 	wg := sync.WaitGroup{}
 	now := time.Now()
 	future := now.AddDate(00, 0, 10000)
@@ -27,14 +28,14 @@ func Test_LocalMapStorage(t *testing.T) {
 		dateMap[d] = payload
 		go func(key time.Time) {
 			defer wg.Done()
-			StorageImpl.Put(key, payload)
+			underTest.Put(key, payload)
 		}(d)
 	}
 	wg.Wait()
 
 	//spin through the map of sent keys and verify there is an object there for it and that the views match
 	for datekey := range dateMap {
-		_, found := StorageImpl.Get(datekey)
+		_, found := underTest.Get(datekey)
 		assert.True(t, found)
 		delete(dateMap, datekey)
 	}

@@ -1,4 +1,4 @@
-// Provides a standard interface and implementations for a kv-style store
+// Provides a standard interface and implementations for a kv-style store for lists of article counts
 package storage
 
 import (
@@ -7,13 +7,7 @@ import (
 	"time"
 )
 
-// Hook for external builders to set storage implementation
 var (
-	// Hook for external builders to set storage implementation
-	StorageImpl Storage = &LocalMapStorage{
-		make(map[time.Time][]messages.ArticleCount),
-		sync.RWMutex{},
-	}
 	// Truncate all keys to midnight
 	TRUNCATE_TO_DAY time.Duration = (24 * time.Hour)
 )
@@ -28,6 +22,14 @@ type Storage interface {
 type LocalMapStorage struct {
 	internal map[time.Time][]messages.ArticleCount
 	rwMutex  sync.RWMutex
+}
+
+// factory for a LocalMapStorage instance
+func NewLocalMapStorage() *LocalMapStorage {
+	return &LocalMapStorage{
+		make(map[time.Time][]messages.ArticleCount),
+		sync.RWMutex{},
+	}
 }
 
 // Add an article day count

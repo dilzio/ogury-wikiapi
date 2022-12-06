@@ -5,6 +5,7 @@ import (
 	"github.com/zavitax/sortedset-go"
 	"gt_mtc_takehome/constants"
 	"gt_mtc_takehome/messages"
+	"gt_mtc_takehome/storage"
 	"math/rand"
 	"strconv"
 	"sync"
@@ -17,6 +18,9 @@ func Test_GetArticleCountsForDateRange_1year(t *testing.T) {
 	mu := sync.Mutex{}
 	//keeps a running count of views per article. Will use to compare with api results
 	verificationMap := make(map[string]messages.ArticleCount)
+	//set a clean storage impl
+
+	DB = storage.NewLocalMapStorage()
 	//set a stub fetcher which will generate some fake data
 	Fetcher = func(date time.Time) ([]messages.ArticleCount, error) {
 		countsSlice := make([]messages.ArticleCount, NUM_DAILY_ARTICLES)
@@ -39,6 +43,8 @@ func Test_GetArticleCountsForDateRange_1year(t *testing.T) {
 		}
 		return countsSlice, nil
 	}
+
+	//call the indexer and check values
 	start, _ := time.Parse(constants.DATELAYOUT, "20210101")
 	end, _ := time.Parse(constants.DATELAYOUT, "20220101")
 	result, _ := GetArticleCountsForDateRange(start, end)
@@ -67,6 +73,8 @@ func Test_GetCountsForArticleInRange_1year(t *testing.T) {
 	mu := sync.Mutex{}
 	//keeps a running count of views per article. Will use to compare with api results
 	verificationMap := make(map[string]messages.ArticleCount)
+	//set a clean storage impl
+	DB = storage.NewLocalMapStorage()
 	//set a stub fetcher which will generate some fake data
 	Fetcher = func(date time.Time) ([]messages.ArticleCount, error) {
 		countsSlice := make([]messages.ArticleCount, NUM_DAILY_ARTICLES)
@@ -91,7 +99,10 @@ func Test_GetCountsForArticleInRange_1year(t *testing.T) {
 	}
 	start, _ := time.Parse(constants.DATELAYOUT, "20210101")
 	end, _ := time.Parse(constants.DATELAYOUT, "20220101")
-	result, _ := GetCountsForArticleInRange(TARGET_ARTICLE, start, end)
+	result, err := GetCountsForArticleInRange(TARGET_ARTICLE, start, end)
+	if err != nil {
+		print(err)
+	}
 	assert.NotNil(t, result)
 	assert.Equal(t, start.Year(), result.StartDate.Year())
 	assert.Equal(t, start.Month(), result.StartDate.Month())
@@ -111,14 +122,7 @@ func Test_GetCountsForArticleInRange_1year(t *testing.T) {
 	}
 }
 
-func Test_WikipediaFetcher(t *testing.T) {
-	date, _ := time.Parse(constants.DATELAYOUT, "20210101")
-	response, err := Fetcher(date)
-
-	print(response, err)
-}
-
-func Test_ssplayground(t *testing.T) {
+func xTest_ssplayground(t *testing.T) {
 	index := sortedset.New[string, int, messages.ArticleCount]()
 	index.AddOrUpdate("article1", 900, messages.ArticleCount{
 		Name:  "article1",

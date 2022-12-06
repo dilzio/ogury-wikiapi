@@ -27,7 +27,7 @@ var (
 	//Var Fetcher holds an instance of a fetcher function. It is exported to enable  stubbing for tests
 	Fetcher fetcher = wikipediafetcher
 	//Var DB is a cache for article day counts.  It is exported to enable stubbing for tests
-	DB = storage.StorageImpl
+	DB storage.Storage = storage.NewLocalMapStorage()
 )
 
 // wikipediafetcher is a wrapper fetcher function for the Wikipedia Pageviews API.
@@ -128,7 +128,7 @@ func GetCountsForArticleInRange(article string, startdate time.Time, enddate tim
 			defer wg.Done()
 			countsForDay, err := getArticleCountsForDay(date)
 			if err != nil {
-				log.Debugf("Unable to retrieve data for date: %d", date)
+				log.Debugf("Unable to retrieve data for date: %v", date)
 				errorChannel <- err
 				return
 			}
@@ -183,7 +183,7 @@ func GetTopDayForArticle(article string, startdate time.Time, enddate time.Time)
 			defer wg.Done()
 			countsForDay, err := getArticleCountsForDay(date)
 			if err != nil {
-				log.Debugf("Unable to retrieve data for date: %d", date)
+				log.Debugf("Unable to retrieve data for date: %v", date)
 				errorChannel <- err
 				return
 			}
