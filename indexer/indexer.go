@@ -198,7 +198,6 @@ func GetTopDayForArticle(article string, startdate time.Time, enddate time.Time)
 						aggregateCountObj := node.Value
 						if countobject.Views > aggregateCountObj.Views {
 							countobject.Date = date
-							//println("count object d is:", date.String())
 							index.AddOrUpdate(countobject.Name, countobject.Views, countobject)
 						}
 					}
