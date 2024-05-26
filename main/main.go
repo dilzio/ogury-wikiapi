@@ -4,8 +4,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	log "github.com/sirupsen/logrus"
-	"gt_mtc_takehome/service"
 	"net/http"
+	"pelotechfun/service"
 )
 
 func main() {

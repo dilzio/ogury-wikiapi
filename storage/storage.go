@@ -2,7 +2,7 @@
 package storage
 
 import (
-	"gt_mtc_takehome/messages"
+	"pelotechfun/messages"
 	"sync"
 	"time"
 )

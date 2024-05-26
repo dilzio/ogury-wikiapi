@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
-	"gt_mtc_takehome/constants"
-	"gt_mtc_takehome/indexer"
 	"net/http"
+	"pelotechfun/constants"
+	"pelotechfun/indexer"
 	"time"
 )
 

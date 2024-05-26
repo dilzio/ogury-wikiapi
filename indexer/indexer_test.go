@@ -3,10 +3,10 @@ package indexer
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/zavitax/sortedset-go"
-	"gt_mtc_takehome/constants"
-	"gt_mtc_takehome/messages"
-	"gt_mtc_takehome/storage"
 	"math/rand"
+	"pelotechfun/constants"
+	"pelotechfun/messages"
+	"pelotechfun/storage"
 	"strconv"
 	"sync"
 	"testing"
