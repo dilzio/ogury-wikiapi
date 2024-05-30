@@ -6,10 +6,19 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 	"net/http"
 	"pelotechfun/constants"
 	"pelotechfun/indexer"
 	"time"
+)
+
+var Meter = otel.Meter("article-stats-service")
+var mostViewedResultsCounter, _ = Meter.Int64UpDownCounter(
+	"most_viewed_results",
+	metric.WithUnit("1"),
+	metric.WithDescription("number of results returned from the most viewed day in month call"),
 )
 
 // Function DoCalcMostViewedDayInMonthForArticle returns the day in a specified month
@@ -33,6 +42,7 @@ func DoCalcMostViewedDayInMonthForArticle(w http.ResponseWriter, r *http.Request
 	onemonthlater := firstOfTheMonth.AddDate(0, 1, 0)
 	firstOfNextMonth := time.Date(onemonthlater.Year(), onemonthlater.Month(), 1, 0, 0, 0, 0, onemonthlater.Location())
 	result, err := indexer.GetTopDayForArticle(articleName, firstOfTheMonth, firstOfNextMonth)
+	mostViewedResultsCounter.Add(r.Context(), int64(len(result.ArticleCounts)))
 	if err != nil {
 		log.Error(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
