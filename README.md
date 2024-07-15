@@ -18,7 +18,7 @@ A Dockerfile is provided for building, running tests, and running the app and is
 commandline
 can be installed from www.docker.com. To install and build the app:
 
-1. Clone the repository to your local machine: `git clone https://github.com/dilzio/pelotechfun.git`
+1. Clone the repository to your local machine: `git clone https://github.com/dilzio/ogury-wikiapi.git`
 2. Cd to the top-level directory (where this README is located)
 3. Build the docker image. This will also build the application: `docker build -t mtc-api .`
 
