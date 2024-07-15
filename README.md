@@ -1,4 +1,4 @@
-# PelotechFun 
+# Wikipedia Stats API 
 
 ## Description
 
