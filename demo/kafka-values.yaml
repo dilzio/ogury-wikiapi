@@ -1,0 +1,15 @@
+global:
+  storageClass: standard
+
+zookeeper:
+  replicaCount: 1
+  persistence:
+    enabled: false
+
+kafka:
+  replicaCount: 1
+  persistence:
+    enabled: false
+
+externalAccess:
+  enabled: false
