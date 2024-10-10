@@ -4,24 +4,17 @@ version_settings(constraint='>=0.22.2')
 
 
 
-# deploy DDB Helm Chart
+#install dynamo
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 helm_repo('keyporttech', 'https://keyporttech.github.io/helm-charts')
 helm_resource('helm-ddb', 'keyporttech/dynamodb', resource_deps=['keyporttech'], port_forwards=['8000:8000', '8001:8001'],flags=['--set=storageType=pvc','--set=storage=1Gi', '--set=storageClass=standard'])
 
-# deploy Kafka Helm Chart - Use the local() function to run the helm install command
-#local("helm install my-release oci://registry-1.docker.io/bitnamicharts/kafka")
-local_resource(
-    'install_kafka',
-    'helm install my-release oci://registry-1.docker.io/bitnamicharts/kafka',
-    deps=[]
-)
-
 #install kafka
-
 k8s_yaml('./config/kafka/00-namespace.yaml')
 k8s_yaml('./config/kafka/01-zookeeper.yaml')
+k8s_resource(workload='zookeeper', labels=['Kafka_Cluster'])
 k8s_yaml('./config/kafka/02-kafka.yaml')
+k8s_resource(workload='kafka-broker', port_forwards=9092, labels=['Kafka_Cluster'])
 
 # config.main_path is the absolute path to the Tiltfile being run
 # there are many Tilt-specific built-ins for manipulating paths, environment variables, parsing JSON/YAML, and more!
