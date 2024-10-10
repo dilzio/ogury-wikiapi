@@ -9,35 +9,19 @@ load('ext://helm_resource', 'helm_resource', 'helm_repo')
 helm_repo('keyporttech', 'https://keyporttech.github.io/helm-charts')
 helm_resource('helm-ddb', 'keyporttech/dynamodb', resource_deps=['keyporttech'], port_forwards=['8000:8000', '8001:8001'],flags=['--set=storageType=pvc','--set=storage=1Gi', '--set=storageClass=standard'])
 
-# deploy Kafka Helm Chart
-# Tiltfile for Kafka setup in Minikube
+# deploy Kafka Helm Chart - Use the local() function to run the helm install command
+#local("helm install my-release oci://registry-1.docker.io/bitnamicharts/kafka")
+local_resource(
+    'install_kafka',
+    'helm install my-release oci://registry-1.docker.io/bitnamicharts/kafka',
+    deps=[]
+)
 
-# Define the namespace
-kafka_namespace = 'kafka'
+#install kafka
 
-# Create the namespace if it doesn't exist
-k8s_yaml('kafka-namespace.yaml')
-
-# Use Helm to install the Kafka chart into Minikube
-# Run Helm as a local command
-local('helm repo add bitnami https://charts.bitnami.com/bitnami')
-local('helm repo update')
-
-# Define a local helm installation step
-helm_kafka_install_cmd = '''
-helm upgrade --install kafka bitnami/kafka \
-  --namespace kafka \
-  --create-namespace \
-  --values kafka-values.yaml \
-  --wait
-'''
-
-# Install or upgrade Kafka with Helm
-local(helm_kafka_install_cmd)
-
-# Watch for Helm-generated Kubernetes YAML files
-k8s_yaml(local('helm template kafka bitnami/kafka --namespace kafka --values kafka-values.yaml'))
-
+k8s_yaml('./config/kafka/00-namespace.yaml')
+k8s_yaml('./config/kafka/01-zookeeper.yaml')
+k8s_yaml('./config/kafka/02-kafka.yaml')
 
 # config.main_path is the absolute path to the Tiltfile being run
 # there are many Tilt-specific built-ins for manipulating paths, environment variables, parsing JSON/YAML, and more!
