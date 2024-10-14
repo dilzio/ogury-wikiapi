@@ -2,8 +2,10 @@
 # https://docs.tilt.dev/api.html#api.version_settings
 version_settings(constraint='>=0.22.2')
 
-
-
+# deploy DDB Helm Chart
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
+helm_repo('keyporttech', 'https://keyporttech.github.io/helm-charts', labels=['DynamoDB'])
+helm_resource('helm-ddb', 'keyporttech/dynamodb', resource_deps=['keyporttech'], port_forwards=['8000:8000', '8001:8001'], labels=['DynamoDB'])
 
 #Install Kafka
 #create namespaces, zk, and kafka brokers
