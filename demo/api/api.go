@@ -27,8 +27,8 @@ var kafkaConfig KafkaConfig
 
 func initKafka() {
 	kafkaConfig = KafkaConfig{
-		Brokers: []string{"localhost:9092"}, // Update with your Kafka broker(s)
-		Topic:   "my-topic",                 // Update with your Kafka topic
+		Brokers: []string{"192.168.194.38:9092"}, // Update with your Kafka broker(s)
+		Topic:   "my-topic",                      // Update with your Kafka topic
 	}
 
 	// Kafka producer configuration
@@ -53,18 +53,20 @@ func handleKafkaMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-
+	log.Println("Msg Key: ", msg.Key)
+	log.Println("Msg Value: ", msg)
 	// Prepare the Kafka message
 	kafkaMsg := &sarama.ProducerMessage{
-		Topic: kafkaConfig.Topic,
-		Key:   sarama.StringEncoder(msg.Key),
-		Value: sarama.StringEncoder(msg.Value),
+		Topic:     kafkaConfig.Topic,
+		Key:       sarama.StringEncoder(msg.Key),
+		Value:     sarama.StringEncoder(msg.Value),
 		Timestamp: time.Now(),
 	}
 
 	// Send the message to Kafka
 	partition, offset, err := kafkaProducer.SendMessage(kafkaMsg)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, fmt.Sprintf("Failed to send message to Kafka: %v", err), http.StatusInternalServerError)
 		return
 	}
