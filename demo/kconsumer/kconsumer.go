@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"log"
 	"os"
 	"os/signal"
@@ -25,7 +26,20 @@ var tableName = "KafkaMessages" // Update with your DynamoDB table name
 
 // initDynamoDB initializes the DynamoDB client.
 func initDynamoDB() {
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1")) // Set your AWS region
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion("us-east-1"), // Set your AWS region
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("key", "key", "")), // Replace with your AWS credentials
+		config.WithEndpointResolver(aws.EndpointResolverFunc(
+			func(service, region string) (aws.Endpoint, error) {
+				if service == dynamodb.ServiceID && region == "us-east-1" {
+					return aws.Endpoint{
+						URL: "http://192.168.194.71:8000",
+					}, nil
+				}
+				return aws.Endpoint{}, fmt.Errorf("unknown endpoint requested")
+			}),
+		),
+	)
 	if err != nil {
 		log.Fatalf("Unable to load AWS SDK config: %v", err)
 	}
@@ -34,6 +48,7 @@ func initDynamoDB() {
 
 // writeToDynamoDB writes a message to DynamoDB.
 func writeToDynamoDB(msg Message) error {
+	log.Println("About to write message to DynamoDB: ", msg.Value)
 	_, err := dynamoClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		TableName: aws.String(tableName),
 		Item: map[string]types.AttributeValue{
@@ -53,8 +68,8 @@ func main() {
 	config.Consumer.Return.Errors = true
 
 	// Define Kafka broker and topic
-	brokers := []string{"localhost:9092"}  // Update with your Kafka broker(s)
-	topic := "my-topic"                    // Update with your Kafka topic
+	brokers := []string{"192.168.194.38:9092"} // Update with your Kafka broker(s)
+	topic := "my-topic"                        // Update with your Kafka topic
 
 	// Create a new consumer group
 	consumer, err := sarama.NewConsumer(brokers, config)
@@ -80,12 +95,10 @@ func main() {
 		select {
 		case msg := <-partitionConsumer.Messages():
 			var message Message
-			err := json.Unmarshal(msg.Value, &message)
-			if err != nil {
-				log.Printf("Error unmarshaling message: %v", err)
-				continue
-			}
-
+			log.Printf("Raw Message value: %s", string(msg.Value))
+			log.Printf("Raw Message key: %s", string(msg.Key))
+			message.Key = string(msg.Key)
+			message.Value = string(msg.Value)
 			// Write the consumed message to DynamoDB
 			if err := writeToDynamoDB(message); err != nil {
 				log.Printf("Error writing message to DynamoDB: %v", err)
