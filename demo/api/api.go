@@ -27,8 +27,10 @@ var kafkaConfig KafkaConfig
 
 func initKafka() {
 	kafkaConfig = KafkaConfig{
-		Brokers: []string{"192.168.194.38:9092"}, // Update with your Kafka broker(s)
-		Topic:   "my-topic",                      // Update with your Kafka topic
+		//Brokers: []string{"192.168.194.38:9092"}, // Update with your Kafka broker(s)
+		//Brokers: []string{"10.244.0.20:9092"}, // Update with your Kafka broker(s)
+		Brokers: []string{"kafka-broker.kafka-service.kafka.svc.cluster.local:9092"}, // cluster IP of K8s kafka service not pod
+		Topic:   "my-topic",                                                          // Update with your Kafka topic
 	}
 
 	// Kafka producer configuration
@@ -68,11 +70,12 @@ func handleKafkaMessage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, fmt.Sprintf("Failed to send message to Kafka: %v", err), http.StatusInternalServerError)
+		log.Println("Failed to send message to Kafka: ", http.StatusInternalServerError)
 		return
 	}
 
 	// Respond with the partition and offset of the sent message
-	fmt.Fprintf(w, "Message sent to partition %d, offset %d\n", partition, offset)
+	log.Printf("Message sent to partition %d, offset %d\n", partition, offset)
 }
 
 func main() {

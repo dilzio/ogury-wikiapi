@@ -1,0 +1,16 @@
+TODO:
+* need to establish a fixed IP for zk and kafka
+* need auto expose api IP 8080 when rebuilt
+* need a way to speed up build with some image caching
+* can we configure the service being coded to run locally and the rest on k8s?
+
+
+
+
+checklist:
+* start mk
+* update zk ip in kafka deploy
+* update api.go and kconsumer.go with IP of kafka service
+* update ddb ip in the kconsumer code
+* expose 8001 for Dynamo Client
+* expose 8080 for API

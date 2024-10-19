@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"log"
 	"os"
 	"os/signal"
+
+	"github.com/aws/aws-sdk-go-v2/credentials"
 
 	"github.com/IBM/sarama"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -33,7 +34,8 @@ func initDynamoDB() {
 			func(service, region string) (aws.Endpoint, error) {
 				if service == dynamodb.ServiceID && region == "us-east-1" {
 					return aws.Endpoint{
-						URL: "http://192.168.194.71:8000",
+						//URL: "http://192.168.194.71:8000",
+						URL: "http://10.244.0.87:8000",
 					}, nil
 				}
 				return aws.Endpoint{}, fmt.Errorf("unknown endpoint requested")
@@ -68,8 +70,9 @@ func main() {
 	config.Consumer.Return.Errors = true
 
 	// Define Kafka broker and topic
-	brokers := []string{"192.168.194.38:9092"} // Update with your Kafka broker(s)
-	topic := "my-topic"                        // Update with your Kafka topic
+	//brokers := []string{"192.168.194.38:9092"} // Update with your Kafka broker(s)
+	brokers := []string{"kafka-broker.kafka-service.kafka.svc.cluster.local:9092"} // cluster IP of K8s kafka service not pod
+	topic := "my-topic"                                                            // Update with your Kafka topic
 
 	// Create a new consumer group
 	consumer, err := sarama.NewConsumer(brokers, config)

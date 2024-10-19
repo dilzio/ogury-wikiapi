@@ -1,4 +1,4 @@
-# version_settings() enforces a minimum Tilt version
+    # version_settings() enforces a minimum Tilt version
 # https://docs.tilt.dev/api.html#api.version_settings
 version_settings(constraint='>=0.22.2')
 
@@ -16,19 +16,19 @@ k8s_yaml('./config/kafka/02-kafka.yaml')
 #add labels for categorization in the tit UI and and port forwards so we can access
 #the cluster from outside the cluster for testing (e.g., using kcat on local machine)
 k8s_resource(workload='zookeeper', labels=['Kafka_Cluster'])
-k8s_resource(workload='kafka-broker', port_forwards=9092, labels=['Kafka_Cluster'])
+k8s_resource(workload='kafka-broker', port_forwards=9092, resource_deps=['zookeeper'], labels=['Kafka_Cluster'])
 
 
 #configure go API service
 docker_build('api-server', './api', dockerfile='./api/Dockerfile')
 k8s_yaml('./api/deploy.yaml')
-k8s_resource(workload='api-server', port_forwards=8080, labels=['api-server'])
+k8s_resource(workload='api-server', port_forwards=8080, labels=['api-server'], resource_deps=['kafka-broker'])
 
 
 #configure go Kafka consumer service
 docker_build('kconsumer-server', './kconsumer', dockerfile='./kconsumer/Dockerfile')
 k8s_yaml('./kconsumer/deploy.yaml')
-k8s_resource(workload='kconsumer-server', labels=['kconsumer-server'])
+k8s_resource(workload='kconsumer-server', labels=['kconsumer-server'], resource_deps=['helm-ddb', 'kafka-broker'])
 
 # config.main_path is the absolute path to the Tiltfile being run
 # there are many Tilt-specific built-ins for manipulating paths, environment variables, parsing JSON/YAML, and more!
